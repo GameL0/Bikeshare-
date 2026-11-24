@@ -1,48 +1,50 @@
-# Bikeshare | Programação 02
-O objetivo do BIKESHARE é construir, como projeto da disciplina de Programação 02, a lógica de negócio completa de um sistema de bicicletas compartilhadas, acessada por uma Facade e validada por testes de aceitação automatizados sem qualquer camada de interface gráfica ou de persistência em banco de dados.
+# Bikeshare | Programação 2
 
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/91018438/204195385-acc6fcd4-05a7-4f25-87d1-cb7d5cc5c852.png" alt="animated" />
-</p>
+Sistema de gerenciamento de bicicletas compartilhadas desenvolvido para a disciplina de Programação 2 (IC/UFAL).
+Só a lógica de negócio é implementada. Ela é acessada por uma **Facade** e validada por testes de aceitação com o **EasyAccept**, sem interface gráfica e sem banco de dados.
 
- ## Sobre o projeto
+## Escopo desta entrega (US1 a US9)
 
-Assim como o WePayU tinha por propósito construir um sistema de folha de pagamento, o **BIKESHARE** tem por propósito construir um sistema de gerenciamento de um serviço de bicicletas compartilhadas (bike-sharing), no estilo dos sistemas usados em várias cidades brasileiras (ex.: Bike Itaú, Tembici).
+| US | Funcionalidade | O que cobre |
+|---|---|---|
+| US1 | Cadastro de usuário | Pessoa física (CPF) e pessoa jurídica (CNPJ e razão social), com plano avulso por padrão |
+| US2 | Consulta de usuário | Leitura dos atributos de um usuário pelo identificador |
+| US3 | Alteração de usuário | Alteração de dados cadastrais, plano e método de pagamento (cartão, Pix ou saldo pré-carregado) |
+| US4 | Remoção de usuário | Remoção de usuários, bloqueada se houver aluguel em andamento |
+| US5 | Cadastro de estação | Estação com nome, endereço e capacidade de vagas |
+| US6 | Gestão de bicicletas | Bicicletas convencionais e elétricas (com nível de bateria) adicionadas a uma estação |
+| US7 | Consulta de disponibilidade | Bicicletas disponíveis e vagas livres em cada estação |
+| US8 | Retirada de bicicleta | Início do aluguel, com bloqueio de bicicleta indisponível, bateria insuficiente e aluguel simultâneo |
+| US9 | Devolução de bicicleta | Fim do aluguel, devolução em estação com vaga e cálculo da tarifa conforme o plano |
 
-O sistema mantém um cadastro de **usuários**, **estações** (pontos de retirada/devolução) e **bicicletas**. Um usuário retira uma bicicleta disponível em uma estação, usa-a por um período (um **aluguel**, também chamado de "corrida") e a devolve em qualquer estação com vaga livre. O sistema deve:
+## Tarifação
 
-- Controlar a disponibilidade de bicicletas em cada estação (bicicletas presentes × vagas livres);
-- Impedir a retirada de bicicletas indisponíveis (em uso, em manutenção) e de estações sem bicicletas;
-- Impedir a devolução em estações sem vagas;
-- Calcular o valor a cobrar por cada aluguel, de acordo com o **plano** do usuário (avulso ou assinante) e com a duração da corrida;
-- Impedir que um usuário **inadimplente** (com pendências financeiras) faça uma nova retirada;
-- Impedir que um usuário com um aluguel em andamento inicie um segundo aluguel simultâneo;
-- Registrar o histórico de aluguéis de cada usuário e gerar relatórios (faturamento, bicicletas disponíveis/alugadas);
-- Permitir desfazer/refazer operações (undo/redo);
-- Rodar de forma **totalmente desacoplada de interface gráfica** — assim como no WePayU, só será implementada a lógica de negócio, acessada por uma **Façade** e validada por scripts de teste de aceitação (EasyAccept).
+Os valores ficam em `parametros.properties`, fora do código:
 
-Está dentro do escopo: cadastro, consulta, alteração e remoção de usuários e estações; gestão de bicicletas convencionais e elétricas; retirada e devolução de bicicletas, com cálculo de tarifa; planos de tarifação avulso, assinante e planos customizados criados em tempo de execução; regras de bloqueio por inadimplência, estação cheia ou vazia e bicicleta indisponível; lançamento e conclusão de manutenção; relatórios de disponibilidade e faturamento; desfazer/refazer operações; e persistência do estado do sistema entre execuções.
+- **Avulso:** cobra por minuto de uso.
+- **Assinante:** paga mensalidade e tem uma franquia de minutos gratuitos. O excedente é cobrado por minuto.
+- **Bicicleta elétrica:** adicional por minuto e nível mínimo de bateria para a retirada.
+- **Carência:** aluguéis muito curtos não são cobrados.
 
-Está fora do escopo: qualquer interface gráfica ou web, integração com um gateway de pagamento real, geolocalização	e qualquer forma de concorrência.		
+## Estrutura
 
-## Glossário 
+```
+src/br/ufal/ic/p2/bikeshare/
+├── Facade.java      ponto de entrada usado pelos testes
+├── modelo/          usuário, estação, bicicleta, aluguel, plano, pagamento
+├── servico/         regras de negócio de cada entidade
+├── fabrica/         criação de usuários, bicicletas e métodos de pagamento
+├── repositorio/     armazenamento em memória e geração de ids
+├── sistema/         estado do sistema e persistência
+├── config/          leitura do parametros.properties
+├── comando/         execução de comandos
+├── excecao/         exceções do domínio, agrupadas por categoria
+└── util/            datas, valores monetários e texto
+tests/               scripts de aceitação (usN.txt e usN_1.txt)
+lib/easyaccept.jar   biblioteca de testes
+```
 
-| Termo | Definição |
-|---|---|
-| **Usuário** | Pessoa cadastrada no sistema, identificada por um identificador único gerado automaticamente. Pode alugar bicicletas. |
-| **Estação** | Ponto físico com um número fixo de vagas (`capacidade`), onde bicicletas ficam disponíveis para retirada e podem ser devolvidas. |
-| **Bicicleta** | Veículo compartilhado, identificado unicamente, que pertence a uma estação enquanto não está em uso. |
-| **Vaga** | Espaço disponível em uma estação para receber uma bicicleta. `vagas livres = capacidade − bicicletas presentes`. |
-| **Aluguel (ou corrida)** | Período de uso de uma bicicleta por um usuário, do momento da retirada até a devolução. |
-| **Plano** | Modalidade de cobrança contratada pelo usuário: *avulso* (paga por minuto/hora a cada corrida) ou *assinante* (paga mensalidade e tem franquia de minutos gratuitos). |
-| **Tarifa** | Valor cobrado por um aluguel, calculado de acordo com o plano do usuário e a duração da corrida. |
-| **Penalidade / taxa extra** | Cobrança adicional lançada sobre um usuário (ex.: atraso na devolução, dano à bicicleta, devolução fora da área de cobertura). Análoga à "taxa de serviço" do sindicato no WePayU. |
-| **Inadimplência** | Situação de um usuário que possui pendências financeiras não quitadas; nesse estado, não pode iniciar novos aluguéis. |
-| **Estado da bicicleta** | Condição operacional da bicicleta: disponível, em uso, em manutenção ou removida. |
-| **Estado do aluguel** | Condição de uma corrida: em andamento, finalizada, cancelada ou expirada. |
-| **Bicicleta convencional / elétrica** | Os dois tipos fixos de bicicleta suportados pelo sistema; a elétrica possui nível de bateria e cobrança adicional por minuto. |
-| **Usuário pessoa física / jurídica** | Os dois tipos fixos de usuário; pessoa física se identifica por CPF, pessoa jurídica por CNPJ/razão social e pode ter fatura consolidada. |
-| **Método de pagamento** | Forma pela qual o usuário paga suas cobranças: cartão, Pix ou saldo pré-carregado. |
+## Como executar
 
----
-
+1. Abra o projeto no IntelliJ (ou outra IDE) e adicione `lib/easyaccept.jar` como biblioteca.
+2. Rode `src/Main.java` a partir da raiz do projeto. Ele executa os testes das US1 a US9 na Facade.
