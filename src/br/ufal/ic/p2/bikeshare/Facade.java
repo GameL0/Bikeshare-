@@ -1,5 +1,14 @@
 package br.ufal.ic.p2.bikeshare;
 
+import br.ufal.ic.p2.bikeshare.comando.ExecutorDeComandos;
+import br.ufal.ic.p2.bikeshare.config.Parametros;
+import br.ufal.ic.p2.bikeshare.servico.AluguelService;
+import br.ufal.ic.p2.bikeshare.servico.BicicletaService;
+import br.ufal.ic.p2.bikeshare.servico.EstacaoService;
+import br.ufal.ic.p2.bikeshare.servico.UsuarioService;
+import br.ufal.ic.p2.bikeshare.sistema.Persistencia;
+import br.ufal.ic.p2.bikeshare.sistema.Sistema;
+
 /**
  Facade
  */
@@ -7,26 +16,50 @@ public class Facade {
 
     private static final String AINDA_NAO_IMPLEMENTADO = "Ainda não implementado.";
 
+    private final Parametros parametros = Parametros.carregar();
+    private final Persistencia persistencia = new Persistencia();
+    private final ExecutorDeComandos executor = new ExecutorDeComandos(() -> this.sistema, this::usar);
+
+    private Sistema sistema;
+    private UsuarioService usuarios;
+    private EstacaoService estacoes;
+    private BicicletaService bicicletas;
+    private AluguelService alugueis;
+
+    public Facade() {
+        usar(persistencia.carregar().orElseGet(() -> new Sistema(parametros)));
+    }
+
+    private void usar(Sistema novoSistema) {
+        sistema = novoSistema;
+        sistema.aplicar(parametros);
+        usuarios = new UsuarioService(sistema);
+        estacoes = new EstacaoService(sistema, parametros);
+        bicicletas = new BicicletaService(sistema, estacoes);
+        alugueis = new AluguelService(sistema, parametros, usuarios, estacoes, bicicletas);
+    }
+
     // =====================================================================
     // US1 - Cadastro de usuario
     // =====================================================================
 
     public String criarUsuario(String nome, String email, String senha, String tipo, String cpfOuCnpj) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return executor.executar(() -> usuarios.criarComDocumento(nome, email, senha, tipo, cpfOuCnpj));
     }
 
     public String criarUsuario(String nome, String email, String senha, String tipo, String cnpj, String razaoSocial) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return executor.executar(() -> usuarios.criarComRazaoSocial(nome, email, senha, tipo, cnpj, razaoSocial));
     }
 
     public String criarUsuario(String nome, String email, String senha, String tipo, String cpf,
                                 String plano, String mensalidade) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return executor.executar(() -> usuarios.criarComDocumento(nome, email, senha, tipo, cpf, plano, mensalidade));
     }
 
     public String criarUsuario(String nome, String email, String senha, String tipo, String cnpj,
                                 String razaoSocial, String plano, String mensalidade) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return executor.executar(() -> usuarios.criarComRazaoSocial(nome, email, senha, tipo, cnpj, razaoSocial,
+                plano, mensalidade));
     }
 
     // =====================================================================
@@ -34,11 +67,11 @@ public class Facade {
     // =====================================================================
 
     public String getAtributoUsuario(String usuario, String atributo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return usuarios.getAtributo(usuario, atributo);
     }
 
     public String getUsuarioPorEmail(String email) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return usuarios.getPorEmail(email);
     }
 
     // =====================================================================
@@ -46,15 +79,15 @@ public class Facade {
     // =====================================================================
 
     public void alterarUsuario(String usuario, String atributo, String valor) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> usuarios.alterar(usuario, atributo, valor));
     }
 
     public void alterarUsuario(String usuario, String atributo, String valor1, String chave) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> usuarios.alterarMetodoComChave(usuario, atributo, valor1, chave));
     }
 
     public void alterarUsuario(String usuario, String atributo, String valor1, String numero, String validade) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> usuarios.alterarMetodoComCartao(usuario, atributo, valor1, numero, validade));
     }
 
     // =====================================================================
@@ -62,7 +95,7 @@ public class Facade {
     // =====================================================================
 
     public void removerUsuario(String usuario) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> usuarios.remover(usuario));
     }
 
     // =====================================================================
@@ -70,7 +103,7 @@ public class Facade {
     // =====================================================================
 
     public String criarEstacao(String nome, String endereco, String capacidade) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return executor.executar(() -> estacoes.criar(nome, endereco, capacidade));
     }
 
     // =====================================================================
@@ -78,19 +111,19 @@ public class Facade {
     // =====================================================================
 
     public void adicionarBicicleta(String estacao, String bicicleta, String tipo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> bicicletas.adicionarConvencional(estacao, bicicleta, tipo));
     }
 
     public void adicionarBicicleta(String estacao, String bicicleta, String tipo, String nivelBateria) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> bicicletas.adicionarComBateria(estacao, bicicleta, tipo, nivelBateria));
     }
 
     public void removerBicicleta(String estacao, String bicicleta) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> bicicletas.remover(estacao, bicicleta));
     }
 
     public String getAtributoBicicleta(String bicicleta, String atributo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return bicicletas.getAtributo(bicicleta, atributo);
     }
 
     // =====================================================================
@@ -98,15 +131,15 @@ public class Facade {
     // =====================================================================
 
     public String getBicicletasDisponiveis(String estacao) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return estacoes.getBicicletasDisponiveis(estacao);
     }
 
     public String getVagasDisponiveis(String estacao) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return estacoes.getVagasDisponiveis(estacao);
     }
 
     public String getEstadoBicicleta(String bicicleta) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return bicicletas.getEstado(bicicleta);
     }
 
     // =====================================================================
@@ -114,7 +147,7 @@ public class Facade {
     // =====================================================================
 
     public String retirarBicicleta(String usuario, String estacao, String bicicleta, String data) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return executor.executar(() -> alugueis.retirar(usuario, estacao, bicicleta, data));
     }
 
     // =====================================================================
@@ -122,7 +155,7 @@ public class Facade {
     // =====================================================================
 
     public void devolverBicicleta(String aluguel, String estacao, String data) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> alugueis.devolver(aluguel, estacao, data));
     }
 
     // =====================================================================
@@ -138,7 +171,7 @@ public class Facade {
     }
 
     public String getAtributoAluguel(String aluguel, String atributo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return alugueis.getAtributo(aluguel, atributo);
     }
 
     // =====================================================================
@@ -194,10 +227,10 @@ public class Facade {
     // =====================================================================
 
     public void zerarSistema() {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        executor.executar(() -> usar(new Sistema(parametros)));
     }
 
     public void encerrarSistema() {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        persistencia.salvar(sistema);
     }
 }
